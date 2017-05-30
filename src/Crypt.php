@@ -21,7 +21,12 @@ class Crypt
      */
     public function __construct($key)
     {
-        $this->key = $key;
+        if (!function_exists('openssl_digest') || !function_exists('openssl_encrypt'))
+        {
+            throw new \Exception("OpenSSL library not found. Please add it to your php installation.");
+        }
+
+        $this->key = substr(openssl_digest($key, 'sha256'), 0, 32);
     }
 
     /**
