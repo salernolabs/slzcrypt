@@ -1,4 +1,6 @@
 <?php
+namespace SalernoLabs\Slzcrypt;
+
 /**
  * Simple wrapper around Openssl encryption and decryption
  *
@@ -6,10 +8,14 @@
  * @subpackage Slzcrypt
  * @author Eric
  */
-namespace SalernoLabs\Slzcrypt;
-
 class Crypt
 {
+    /** @var int */
+    private const IV_BYTE_SIZE = 16;
+    /** @var string */
+    private const CIPHER_METHOD = 'AES-128-CBC';
+    /** @var int  */
+    private const KEY_LENGTH = 32;
     /**
      * @var string
      */
@@ -17,37 +23,44 @@ class Crypt
 
     /**
      * Crypt constructor.
-     * @param $key
+     * @param string $key The key to use during encryption
+     * @param callable $functionExists The class to determine if functions exist or not
+     * @throws \Exception When openssl is not found
      */
-    public function __construct($key)
+    public function __construct(string $key, callable $functionExists = null)
     {
-        if (!function_exists('openssl_digest') || !function_exists('openssl_encrypt'))
+        $functionExists = $functionExists ?? function (string $function): bool {
+            return \function_exists($function);
+        };
+
+        if (!$functionExists('openssl_digest') || !$functionExists('openssl_encrypt'))
         {
             throw new \Exception("OpenSSL library not found. Please add it to your php installation.");
         }
 
-        $this->key = substr(openssl_digest($key, 'sha256'), 0, 32);
+        $this->key = substr(openssl_digest($key, 'sha256'), 0, self::KEY_LENGTH);
     }
 
     /**
-     * Encrypt an object
+     * Encrypt something
      *
-     * @param $data
+     * @param mixed $data
      * @return string
      */
-    public function encrypt($data)
+    public function encrypt($data): string
     {
         if (!is_object($data))
         {
-            $object = new \stdClass();
-            $object->_slzCryptData = $data;
+            $data = (object)[
+                '_slzCryptData' => $data,
+            ];
         }
 
         $data = serialize($data);
 
-        $iv = openssl_random_pseudo_bytes(16);
+        $iv = openssl_random_pseudo_bytes(self::IV_BYTE_SIZE);
 
-        $data = openssl_encrypt($data, 'AES-128-CBC', $this->key, 1, $iv);
+        $data = openssl_encrypt($data, self::CIPHER_METHOD, $this->key, 1, $iv);
 
         $data = base64_encode($iv . $data);
 
@@ -57,21 +70,21 @@ class Crypt
     /**
      * Decrypt an object
      *
-     * @param $data
+     * @param string $data
      * @return mixed
      */
-    public function decrypt($data)
+    public function decrypt(string $data)
     {
         //Decrypt the data
         $data = base64_decode($data);
-        $iv = substr($data, 0, 16);
-        $data = substr($data, 16);
+        $iv = substr($data, 0, self::IV_BYTE_SIZE);
+        $data = substr($data, self::IV_BYTE_SIZE);
 
-        $data = openssl_decrypt($data, 'AES-128-CBC', $this->key, 1, $iv);
+        $data = openssl_decrypt($data, self::CIPHER_METHOD, $this->key, 1, $iv);
 
         $object = unserialize($data);
 
-        if (!empty($object->_slzCryptData))
+        if (isset($object->_slzCryptData))
         {
             return $object->_slzCryptData;
         }
