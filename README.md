@@ -2,7 +2,7 @@
 
 [![Latest Stable Version](https://poser.pugx.org/salernolabs/slzcrypt/v/stable)](https://packagist.org/packages/salernolabs/slzcrypt)
 [![License](https://poser.pugx.org/salernolabs/slzcrypt/license)](https://packagist.org/packages/salernolabs/slzcrypt)
-[![Build Status](https://travis-ci.org/salernolabs/slzcrypt.svg?branch=master)](https://travis-ci.org/salernolabs/slzcrypt)
+[![Build Status](https://travis-ci.com/salernolabs/slzcrypt.svg?branch=master)](https://travis-ci.org/salernolabs/slzcrypt)
 
 Wrapper around OpenSSL encryption in PHP. Another breakout from my custom framework.
 
